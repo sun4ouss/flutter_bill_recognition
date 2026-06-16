@@ -1,0 +1,65 @@
+COMPREHENSIVE MODEL EVALUATION RESULTS
+==================================================
+
+Final Validation Loss: 0.0444
+Final Validation Accuracy: 0.9923
+
+OVERFITTING ANALYSIS:
+Train Accuracy: 0.9565
+Val Accuracy: 0.9923
+Accuracy Gap: -0.0359
+
+CLASSIFICATION REPORT:
+               precision    recall  f1-score   support
+
+  01_1 Dollar     0.9917    0.9835    0.9876       121
+  02_2 Dollar     1.0000    0.9919    0.9960       124
+  03_5 Dollar     0.9919    1.0000    0.9960       123
+ 04_10 Dollar     0.9935    1.0000    0.9967       153
+ 05_50 Dollar     0.9853    0.9781    0.9817       137
+06_100 Dollar     0.9920    1.0000    0.9960       124
+
+     accuracy                         0.9923       782
+    macro avg     0.9924    0.9923    0.9923       782
+ weighted avg     0.9923    0.9923    0.9923       782
+
+
+CONFUSION MATRIX:
+[[119   0   0   0   2   0]
+ [  1 123   0   0   0   0]
+ [  0   0 123   0   0   0]
+ [  0   0   0 153   0   0]
+ [  0   0   1   1 134   1]
+ [  0   0   0   0   0 124]]
+
+PER-CLASS METRICS:
+01_1 Dollar:
+  Precision: 0.9917
+  Recall: 0.9835
+  F1-Score: 0.9876
+
+02_2 Dollar:
+  Precision: 1.0000
+  Recall: 0.9919
+  F1-Score: 0.9960
+
+03_5 Dollar:
+  Precision: 0.9919
+  Recall: 1.0000
+  F1-Score: 0.9960
+
+04_10 Dollar:
+  Precision: 0.9935
+  Recall: 1.0000
+  F1-Score: 0.9967
+
+05_50 Dollar:
+  Precision: 0.9853
+  Recall: 0.9781
+  F1-Score: 0.9817
+
+06_100 Dollar:
+  Precision: 0.9920
+  Recall: 1.0000
+  F1-Score: 0.9960
+

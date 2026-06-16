@@ -1,0 +1,6 @@
+1 Dollar
+2 Dollar
+5 Dollar
+10 Dollar
+50 Dollar
+100 Dollar

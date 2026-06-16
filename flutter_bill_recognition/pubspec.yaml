@@ -1,0 +1,26 @@
+name: bill_recognition
+description: Flutter app for USD bill recognition using TensorFlow Lite
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: '>=3.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  camera: ^0.10.6
+  image_picker: ^1.1.2
+  permission_handler: ^11.3.1
+  tflite_flutter: ^0.12.1
+  image: ^4.5.3   # дуже важливий пакет
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  assets:
+    - assets/models/bill_classifier_v3.tflite
+    - assets/models/labels.txt
