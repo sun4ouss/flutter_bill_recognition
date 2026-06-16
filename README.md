@@ -30,7 +30,7 @@ mkdir -p assets/models
 ```bash
 # Скопіювати TFLite модель в assets/models
 # Потрібно створити bill_classifier.tflite з вашої моделі
-cp ../models/bill_classifier.tflite assets/models/
+cp ../models/bill_classifier_v3.tflite assets/models/
 ```
 
 ### 4. Запуск додатку
@@ -64,14 +64,14 @@ flutter run -d ios
 - 100 Dollar
 
 ## ⚠️ Важливо
-1. **TFLite модель**: Потрібно скопіювати `bill_classifier.tflite` в `assets/models/`
+1. **TFLite модель**: Потрібно скопіювати `bill_classifier_v3.tflite` в `assets/models/`
 2. **Дозволи**: Додаток потребує дозволу на камеру
 3. **Тестування**: Рекомендується тестувати на реальних банкнотах
 
 ## 🐛 Вирішення проблем
 
 ### Помилка "Модель не завантажена"
-- Перевірте наявність `bill_classifier.tflite` в `assets/models/`
+- Перевірте наявність `bill_classifier_v3.tflite` в `assets/models/`
 - Перевірте `pubspec.yaml` - секція `assets`
 
 ### Помилка дозволу камери
