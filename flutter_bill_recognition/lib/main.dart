@@ -5,14 +5,15 @@ import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:tflite_flutter/tflite_flutter.dart';
 import 'package:image/image.dart' as img;
-
+ 
 void main() {
   runApp(const BillRecognitionApp());
 }
-
+ 
+/// Кореневий віджет застосунку
 class BillRecognitionApp extends StatelessWidget {
   const BillRecognitionApp({super.key});
-
+ 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -25,46 +26,48 @@ class BillRecognitionApp extends StatelessWidget {
     );
   }
 }
-
+ 
+/// Головний екран із камерою та кнопками розпізнавання
 class CameraScreen extends StatefulWidget {
   const CameraScreen({super.key});
-
+ 
   @override
   State<CameraScreen> createState() => _CameraScreenState();
 }
-
+ 
 class _CameraScreenState extends State<CameraScreen> {
   CameraController? _cameraController;
   List<CameraDescription>? _cameras;
-  Interpreter? _interpreter; // ВИПРАВЛЕНО: nullable, щоб уникнути crash у dispose()
+  Interpreter? _interpreter;
   bool _isModelLoaded = false;
   String _result = '';
   double _confidence = 0.0;
   bool _isProcessing = false;
-
+ 
+  /// Назви класів у тому ж порядку, що й виходи моделі
   final List<String> _classNames = [
     '1 Dollar', '2 Dollar', '5 Dollar',
     '10 Dollar', '50 Dollar', '100 Dollar',
   ];
-
-  // Поріг впевненості — якщо менше, показуємо "не розпізнано"
+ 
+  /// Мінімальна впевненість для показу результату
   static const double _confidenceThreshold = 0.85;
-
+ 
   @override
   void initState() {
     super.initState();
     _initializeCamera();
     _loadModel();
   }
-
+ 
   @override
   void dispose() {
-    // ВИПРАВЛЕНО: перевірка перед close(), щоб не було crash
     if (_isModelLoaded) _interpreter?.close();
     _cameraController?.dispose();
     super.dispose();
   }
-
+ 
+  /// Завантажує TFLite-модель із папки assets
   Future<void> _loadModel() async {
     try {
       _interpreter = await Interpreter.fromAsset(
@@ -72,13 +75,12 @@ class _CameraScreenState extends State<CameraScreen> {
         options: InterpreterOptions()..threads = 4,
       );
       setState(() => _isModelLoaded = true);
-      print('✅ Модель успішно завантажена');
     } catch (e) {
-      print('❌ Помилка завантаження моделі: $e');
       _showMessage('Не вдалося завантажити модель');
     }
   }
-
+ 
+  /// Запитує дозвіл і ініціалізує першу доступну камеру
   Future<void> _initializeCamera() async {
     var cameraStatus = await Permission.camera.request();
     if (cameraStatus.isGranted) {
@@ -96,61 +98,61 @@ class _CameraScreenState extends State<CameraScreen> {
       _showMessage('Потрібен дозвіл на використання камери');
     }
   }
-
+ 
+  /// Читає файл зображення, готує тензор і запускає інференс
   Future<void> _recognizeImage(File imageFile) async {
     if (!_isModelLoaded || _interpreter == null) {
       _showMessage('Модель ще не завантажена');
       return;
     }
-
+ 
     try {
       final imageBytes = await imageFile.readAsBytes();
       img.Image? image = img.decodeImage(imageBytes);
       if (image == null) throw Exception('Не вдалося декодувати зображення');
-
+ 
+      // Приводимо зображення до розміру, очікуваного моделлю
       img.Image resized = img.copyResize(image, width: 224, height: 224);
-
-      // ВИПРАВЛЕНО: нормалізація пікселів у діапазон [0, 1]
+ 
       final input = _imageToFloat32Input(resized);
-
-      // Output: [1, 6]
+ 
+      // Вихід моделі: масив ймовірностей для кожного класу
       final output = [List<double>.filled(6, 0.0)];
-
+ 
       _interpreter!.run(input, output);
-
+ 
       final probabilities = output[0];
       int maxIndex = 0;
       double maxProb = probabilities[0];
-
+ 
+      // Шукаємо клас із найвищою ймовірністю
       for (int i = 1; i < probabilities.length; i++) {
         if (probabilities[i] > maxProb) {
           maxProb = probabilities[i];
           maxIndex = i;
         }
       }
-
+ 
       setState(() {
         if (maxProb >= _confidenceThreshold) {
           _result = _classNames[maxIndex];
           _confidence = maxProb * 100;
         } else {
-          // Якщо впевненість низька — повідомляємо користувача
+          // Впевненість нижче порогу — результат ненадійний
           _result = 'Не розпізнано';
           _confidence = maxProb * 100;
         }
       });
-
-      print('🎯 ${_classNames[maxIndex]} — ${(maxProb * 100).toStringAsFixed(2)}%');
     } catch (e) {
-      print('❌ Помилка розпізнавання: $e');
       setState(() {
         _result = 'Помилка розпізнавання';
         _confidence = 0;
       });
     }
   }
-
-  // ВИПРАВЛЕНО: нормалізація / 255.0 та сучасний API пакету image 4.x
+ 
+  /// Перетворює зображення у 4-вимірний тензор [1, 224, 224, 3]
+  /// зі значеннями пікселів, нормалізованими у діапазон [0, 1]
   List<List<List<List<double>>>> _imageToFloat32Input(img.Image image) {
     final inputBuffer = List.generate(
       1,
@@ -162,11 +164,10 @@ class _CameraScreenState extends State<CameraScreen> {
         ),
       ),
     );
-
+ 
     for (int y = 0; y < 224; y++) {
       for (int x = 0; x < 224; x++) {
         final pixel = image.getPixel(x, y);
-        // ВИПРАВЛЕНО: сучасний API (image 4.x) + нормалізація [0, 1]
         inputBuffer[0][y][x][0] = pixel.r.toDouble() / 255.0; // R
         inputBuffer[0][y][x][1] = pixel.g.toDouble() / 255.0; // G
         inputBuffer[0][y][x][2] = pixel.b.toDouble() / 255.0; // B
@@ -174,17 +175,18 @@ class _CameraScreenState extends State<CameraScreen> {
     }
     return inputBuffer;
   }
-
+ 
+  /// Робить знімок камерою та передає його на розпізнавання
   Future<void> _captureAndRecognize() async {
     if (_cameraController == null ||
         !_cameraController!.value.isInitialized ||
         _isProcessing) return;
-
+ 
     setState(() {
       _isProcessing = true;
       _result = '';
     });
-
+ 
     try {
       final image = await _cameraController!.takePicture();
       await _recognizeImage(File(image.path));
@@ -194,11 +196,12 @@ class _CameraScreenState extends State<CameraScreen> {
       setState(() => _isProcessing = false);
     }
   }
-
+ 
+  /// Відкриває галерею та передає вибране фото на розпізнавання
   Future<void> _pickImageFromGallery() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-
+ 
     if (pickedFile != null) {
       setState(() {
         _isProcessing = true;
@@ -213,13 +216,14 @@ class _CameraScreenState extends State<CameraScreen> {
       }
     }
   }
-
+ 
+  /// Показує короткe повідомлення у нижній частині екрана
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.blue),
     );
   }
-
+ 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -230,7 +234,7 @@ class _CameraScreenState extends State<CameraScreen> {
       ),
       body: Column(
         children: [
-          // Камера
+          // Превью камери або індикатор завантаження
           Expanded(
             flex: 2,
             child: _cameraController != null &&
@@ -247,8 +251,8 @@ class _CameraScreenState extends State<CameraScreen> {
                     ),
                   ),
           ),
-
-          // Результат
+ 
+          // Блок із результатом розпізнавання
           Container(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -273,6 +277,7 @@ class _CameraScreenState extends State<CameraScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                 ),
+                // Індикатор прогресу під час обробки
                 if (_isProcessing) ...[
                   const SizedBox(height: 16),
                   const LinearProgressIndicator(),
@@ -282,8 +287,8 @@ class _CameraScreenState extends State<CameraScreen> {
               ],
             ),
           ),
-
-          // Кнопки
+ 
+          // Кнопки: зйомка камерою та вибір із галереї
           Container(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -297,8 +302,7 @@ class _CameraScreenState extends State<CameraScreen> {
                         ? const SizedBox(
                             width: 20,
                             height: 20,
-                            child:
-                                CircularProgressIndicator(strokeWidth: 2),
+                            child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.camera_alt),
                     label: Text(_isProcessing ? 'Обробка...' : 'Зняти фото'),
@@ -332,3 +336,4 @@ class _CameraScreenState extends State<CameraScreen> {
     );
   }
 }
+ 
